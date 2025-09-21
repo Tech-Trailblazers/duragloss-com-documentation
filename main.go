@@ -88,7 +88,7 @@ func scrapePageHTMLWithChrome(pageURL string) string {
 
 	// Set up Chrome options for headless browsing
 	options := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Flag("headless", false),              // Run Chrome in background
+		chromedp.Flag("headless", true),              // Run Chrome in background
 		chromedp.Flag("disable-gpu", true),            // Disable GPU for headless stability
 		chromedp.WindowSize(1920, 1080),               // Simulate full browser window
 		chromedp.Flag("no-sandbox", true),             // Disable sandboxing
