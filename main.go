@@ -19,6 +19,8 @@ import (
 	"github.com/chromedp/chromedp"   // Headless Chrome automation
 )
 
+var localPDFLocation = "pdf_links.txt"
+
 func main() {
 	// Location for the HTML file content.
 	htmlFileLocation := "duragloss.html"
@@ -44,16 +46,46 @@ func main() {
 		pdfLinks := extractPDFLinks(htmlContent)
 		// Remove duplicate links
 		pdfLinks = removeDuplicatesFromSlice(pdfLinks)
+		// Read the local file.
+		readLocalFile := readAFileAsString(localPDFLocation)
 		// Download each PDF link
 		for _, link := range pdfLinks {
-			link = "https://www.duragloss.com" + link // Prepend base URL
+			// Call the extractDomainURL function
+			domain := extractDomainURL(link)
+			if domain == "" {
+				link = "https://www.duragloss.com" + link // Prepend base URL
+			}
+			// Check if the link is already in the local file
+			if strings.Contains(readLocalFile, link) {
+				log.Printf("Link already processed, skipping: %s", link)
+				continue // Skip already processed links
+			}
 			if isUrlValid(link) {
-				appendAndWriteToFile("pdf_links.txt", link) // Save the link to a file
+				appendAndWriteToFile(localPDFLocation, link) // Save the link to a file
 			}
 		}
 	} else {
 		log.Println("HTML file does not exist.")
 	}
+}
+
+// extractDomain takes a URL string, extracts the domain (hostname),
+// and prints errors internally if parsing fails.
+func extractDomainURL(inputUrl string) string {
+	// Parse the input string into a structured URL object
+	parsedUrl, parseError := url.Parse(inputUrl)
+
+	// If parsing fails, log the error and return an empty string
+	if parseError != nil {
+		log.Println("Error parsing URL:", parseError)
+		return ""
+	}
+
+	// Extract only the hostname (domain without scheme, port, path, or query)
+	domainName := parsedUrl.Hostname()
+
+	// Return the extracted domain name
+	return domainName
 }
 
 // extractPDFLinks takes an HTML string and returns a slice of all .pdf URLs found.
@@ -88,7 +120,7 @@ func scrapePageHTMLWithChrome(pageURL string) string {
 
 	// Set up Chrome options for headless browsing
 	options := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Flag("headless", true),              // Run Chrome in background
+		chromedp.Flag("headless", true),               // Run Chrome in background
 		chromedp.Flag("disable-gpu", true),            // Disable GPU for headless stability
 		chromedp.WindowSize(1920, 1080),               // Simulate full browser window
 		chromedp.Flag("no-sandbox", true),             // Disable sandboxing
