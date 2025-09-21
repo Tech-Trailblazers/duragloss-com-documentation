@@ -63,6 +63,8 @@ func main() {
 			if isUrlValid(link) {
 				appendAndWriteToFile(localPDFLocation, link) // Save the link to a file
 			}
+			// Download the PDF
+			downloadPDF(link, outputDir)
 		}
 	} else {
 		log.Println("HTML file does not exist.")
